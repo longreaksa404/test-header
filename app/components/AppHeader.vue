@@ -1,125 +1,154 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-/**
- * Relative import resolves "Cannot find module" errors.
- */
 import type { HeaderData } from '../types/navigation'
 
-/**
- * Passing <HeaderData> generic fixes "Property 'hasDropdown' does not exist".
- */
 const { data: menuData } = await useFetch<HeaderData>('/api/header')
+const { activeDropdown, isProfileOpen, isBalanceOpen, toggle, closeAll } = useHeaderState()
 
-const activeDropdown = ref<string | null>(null)
-const isProfileOpen = ref(false)
-
-const toggleDropdown = (label: string) => {
-  activeDropdown.value = activeDropdown.value === label ? null : label
-}
-
-/**
- * Standard Nuxt check replaces 'process' to fix "Cannot find name 'process'".
- */
 if (import.meta.client) {
-  window.addEventListener('click', () => {
-    activeDropdown.value = null
-    isProfileOpen.value = false // Fixes "Type 'null' is not assignable to 'boolean'"
-  })
+  const onWindowClick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (!target.closest('header')) closeAll()
+  }
+  window.addEventListener('click', onWindowClick)
+  onUnmounted(() => window.removeEventListener('click', onWindowClick))
 }
 
-const profileMenu = [
-  { label: 'TRANG CÁ NHÂN', icon: 'lucide:user-circle' },
-  { label: 'NHIỆM VỤ', icon: 'lucide:target' },
-  { label: 'VÍ CỦA BẠN', icon: 'lucide:wallet' },
-  { label: 'LỊCH SỬ GIAO DỊCH', icon: 'lucide:history' },
-  { label: 'THOÁT TÀI KHOẢN', icon: 'lucide:log-out' }
+// profile
+const accountActions = [
+  { label: 'MY PROFILE', icon: 'lucide:user-circle' },
+  { label: 'CHALLENGES', icon: 'lucide:target' },
+  { label: 'MY WALLET', icon: 'lucide:wallet' },
+  { label: 'TRANSACTIONS', icon: 'lucide:history' },
+  { label: 'SIGN OUT', icon: 'lucide:log-out' }
 ]
 </script>
 
 <template>
-  <header class="w-full fixed top-0 z-50 font-sans shadow-2xl">
-    <div class="bg-black h-[64px] flex items-center justify-between px-4 lg:px-10">
-      <div class="flex items-center gap-10">
-        <div class="text-white text-4xl font-black italic tracking-tighter cursor-pointer">LOGO</div>
-        
-        <nav class="hidden xl:flex items-center gap-1">
-          <div v-for="item in menuData?.mainNav" :key="item.label" class="relative">
-            <button 
-              @click.stop="toggleDropdown(item.label)"
-              :class="[
-                'text-[13px] font-bold px-5 py-2 rounded-t-2xl transition-all duration-300 uppercase',
-                activeDropdown === item.label 
-                  ? 'bg-gradient-to-b from-[#333] to-[#111] text-white shadow-lg' 
-                  : 'text-[#C9A35F] hover:text-white'
-              ]"
-            >
-              {{ item.label }}
-            </button>
+  <header class="fixed top-0 z-50 w-full font-sans shadow-2xl">
+    
+    <div class="relative flex h-24 w-full flex-col overflow-hidden border-b border-white/10 xl:hidden">
+      <div class="flex h-1/2 w-full items-center justify-end bg-[#C9A35F] px-4 gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/80">
+          <span class="text-sm font-bold text-[#C9A35F]">EN</span>
+        </div>
+        <button class="flex h-10 w-10 items-center justify-center rounded-full bg-black/80">
+          <Icon name="lucide:menu" class="h-6 w-6 text-[#C9A35F]" />
+        </button>
+      </div>
+      <div class="flex h-1/2 w-full items-center justify-end bg-black px-4 gap-4">
+        <div class="flex items-center gap-4">
+          <Icon name="twemoji:soccer-ball" class="h-6 w-6" />
+          <Icon name="twemoji:basketball" class="h-6 w-6" />
+          <Icon name="twemoji:video-game-content" class="h-6 w-6" />
+        </div>
+      </div>
+      <div class="absolute left-0 top-0 flex h-full w-[60%] items-center rounded-tr-[4rem] bg-black pl-6">
+        <div class="text-4xl font-black italic tracking-tighter text-white">STREAM</div>
+      </div>
+    </div>
 
-            <Transition name="slide-up">
-              <div v-if="activeDropdown === item.label && item.hasDropdown" 
-                class="absolute top-full left-0 w-[200px] glass-dropdown shadow-2xl rounded-b-[2rem] rounded-tr-[2rem] overflow-hidden border border-white/20 z-[60]"
+    <div class="hidden xl:block">
+      <div class="flex h-[54px] items-center justify-between bg-[#C9A35F] px-4 lg:px-10">
+        <div class="flex h-full items-center gap-6">
+          <div class="-ml-10 flex h-full items-center bg-black px-10">
+            <span class="text-5xl font-black italic tracking-tighter text-white">STREAM</span>
+          </div>
+          
+          <nav class="flex items-center gap-1">
+            <div v-for="item in menuData?.mainNav" :key="item.label" class="relative h-full">
+              <button 
+                @click.stop="toggle('menu', item.label)"
+                :class="['px-5 py-2 text-[13px] font-bold uppercase transition-all rounded-t-2xl flex items-center gap-1', 
+                activeDropdown === item.label ? 'bg-black text-white' : 'text-black hover:text-white']"
               >
-                <div class="flex flex-col py-2">
-                  <NuxtLink v-for="sub in item.children" :key="sub.name" to="#" 
-                    class="flex items-center gap-3 px-4 py-3 hover:bg-white/30 transition-all border-b border-black/5 last:border-0 group"
-                  >
-                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-                      <Icon :name="sub.icon" class="w-5 h-5 text-gray-800" />
+                {{ item.label }}
+                <Icon v-if="item.hasDropdown" name="lucide:chevron-down" class="w-3 h-3 opacity-50" />
+              </button>
+
+              <Transition name="slide-up">
+                <div v-if="activeDropdown === item.label && item.hasDropdown" 
+                  class="absolute left-0 top-full z-[80] w-64 overflow-hidden rounded-b-2xl bg-black border-t border-white/10 shadow-2xl"
+                >
+                  <div class="flex flex-col py-2">
+                    <button v-for="child in item.children" :key="child.name" 
+                      class="flex items-center gap-3 px-5 py-4 text-[11px] font-bold text-[#C9A35F] hover:bg-white/5 transition text-left"
+                    >
+                      <Icon :name="child.icon" class="h-5 w-5 opacity-80" />
+                      {{ child.name }}
+                    </button>
+                  </div>
+                </div>
+              </Transition>
+            </div>
+          </nav>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <button @click.stop="toggle('balance')" 
+              class="flex items-center gap-3 rounded-full border bg-white py-1 pl-2 pr-1 shadow-sm transition-all hover:shadow-md"
+            >
+              <div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#C9A35F]">
+                 <Icon name="lucide:coins" class="h-4 w-4 text-white" />
+              </div>
+              <span class="pr-2 text-sm font-black text-black">2,500</span>
+              <div class="rounded-full bg-[#C9A35F] p-1 transition-transform" :class="isBalanceOpen ? 'rotate-45' : ''">
+                <Icon :name="isBalanceOpen ? 'lucide:x' : 'lucide:plus'" class="h-3 w-3 font-bold text-black" />
+              </div>
+            </button>
+            
+            <Transition name="slide-up">
+              <div v-if="isBalanceOpen" class="balance-glass absolute right-0 top-full z-[70] mt-2 w-52 rounded-2xl border border-white/10 shadow-2xl">
+                <div class="flex flex-col p-2">
+                  <div class="flex items-center gap-3 rounded-xl p-3 hover:bg-white/10 transition">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-500/30">
+                      <Icon name="lucide:coins" class="h-5 w-5 text-white/80" />
                     </div>
-                    <span class="text-[12px] font-bold text-gray-700 uppercase">{{ sub.name }}</span>
-                  </NuxtLink>
+                    <span class="text-sm font-bold text-white">45,000</span>
+                  </div>
+                  <button class="mt-1 w-full rounded-lg bg-white/5 py-3 text-xs font-black uppercase text-[#C9A35F] hover:bg-[#C9A35F] hover:text-black transition-colors">
+                    DEPOSIT
+                  </button>
                 </div>
               </div>
             </Transition>
           </div>
-        </nav>
-      </div>
 
-      <div class="flex items-center gap-4">
-        <div class="hidden md:flex items-center gap-4">
-          <div class="flex items-center bg-[#1a1a1a] rounded-full pl-4 pr-1 py-1 gap-3 border border-[#C9A35F]/30">
-            <span class="text-[#C9A35F] font-bold text-sm">1.000</span>
-            <div class="bg-[#C9A35F] rounded-full p-1 cursor-pointer hover:rotate-90 transition duration-300">
-              <Icon name="lucide:plus" class="w-3 h-3 text-black font-bold" />
-            </div>
+          <div class="relative">
+            <button @click.stop="toggle('profile')" 
+              class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-black bg-zinc-800 transition-transform hover:scale-105"
+            >
+              <Icon name="lucide:user" class="h-5 w-5 text-gray-400" />
+            </button>
+            
+            <Transition name="slide-up">
+              <div v-if="isProfileOpen" class="absolute right-0 top-full z-[60] mt-3 w-64 overflow-hidden rounded-2xl bg-[#111] border border-white/5 shadow-2xl">
+                <div class="bg-black p-3 text-center text-[11px] font-black uppercase text-[#C9A35F] tracking-widest border-b border-white/5">
+                  User Control Center
+                </div>
+                
+                <div class="flex flex-col py-1">
+                  <button v-for="action in accountActions" :key="action.label" 
+                    class="flex items-center gap-4 px-5 py-4 text-[11px] font-bold text-gray-300 hover:bg-white/5 hover:text-[#C9A35F] transition-all border-b border-white/5 last:border-0"
+                  >
+                    <Icon :name="action.icon" class="h-4 w-4 text-[#C9A35F]" />
+                    <span class="uppercase">{{ action.label }}</span>
+                  </button>
+                </div>
+              </div>
+            </Transition>
           </div>
         </div>
-
-        <div class="relative">
-          <button @click.stop="isProfileOpen = !isProfileOpen" 
-            class="w-9 h-9 rounded-full border-2 border-[#C9A35F] bg-zinc-800 flex items-center justify-center hover:scale-105 transition overflow-hidden"
-          >
-            <Icon name="lucide:user" class="w-5 h-5 text-gray-400" />
-          </button>
-          
-          <Transition name="slide-up">
-            <div v-if="isProfileOpen" 
-              class="absolute right-0 top-full mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[60]"
-            >
-              <div class="bg-gradient-to-r from-[#C9A35F] to-[#E5C385] p-3 text-center text-[11px] font-black uppercase text-black">
-                <Icon name="lucide:shield-check" class="inline w-3 h-3 mr-1" />
-                Trung tâm tài khoản
-              </div>
-              <div class="py-1">
-                <button v-for="opt in profileMenu" :key="opt.label" 
-                  class="w-full text-left px-4 py-3.5 text-[11px] font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition border-b border-gray-50 last:border-0"
-                >
-                  <Icon :name="opt.icon" class="w-4 h-4 text-[#C9A35F]" />
-                  {{ opt.label }}
-                </button>
-              </div>
-            </div>
-          </Transition>
-        </div>
       </div>
-    </div>
 
-    <div class="bg-[#C9A35F] h-10 flex items-center px-4 lg:px-10 border-t border-black/10 overflow-x-auto no-scrollbar">
-      <div class="flex items-center gap-8 whitespace-nowrap">
-        <div v-for="feat in menuData?.subNav" :key="feat.label" class="flex items-center gap-2 group cursor-pointer">
-          <Icon :name="feat.icon || 'lucide:circle'" class="w-4 h-4 text-black group-hover:scale-110 transition duration-200" />
-          <span class="text-[11px] font-black text-black uppercase">{{ feat.label }}</span>
+      <div class="flex h-12 items-center overflow-x-auto bg-black px-4 lg:px-10 no-scrollbar">
+        <div class="flex items-center gap-8 whitespace-nowrap">
+          <div v-for="link in menuData?.subNav" :key="link.label" class="flex items-center gap-2 cursor-pointer group">
+            <div :class="['flex items-center gap-2 px-4 py-1.5 transition-all', link.label === 'Hot Tips' ? 'border-2 border-[#C9A35F] rounded-full' : '']">
+              <Icon :name="link.icon || 'lucide:star'" class="h-4 w-4 text-[#C9A35F] group-hover:scale-110 transition-transform" />
+              <span class="text-[11px] font-black text-[#C9A35F] uppercase">{{ link.label }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -127,26 +156,18 @@ const profileMenu = [
 </template>
 
 <style scoped>
-/* Glassmorphism Effect */
-.glass-dropdown {
-  background: linear-gradient(
-    180deg, 
-    rgba(220, 220, 220, 0.95) 0%, 
-    rgba(255, 255, 255, 0.85) 100%
-  );
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+.balance-glass {
+  background: linear-gradient(180deg, rgba(30, 30, 30, 0.95) 0%, rgba(10, 10, 10, 0.95) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
-
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* Animation Logic */
 .slide-up-enter-active, .slide-up-leave-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .slide-up-enter-from, .slide-up-leave-to {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(8px);
 }
 </style>

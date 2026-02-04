@@ -15,5 +15,16 @@
     "nuxt": "^4.3.0",
     "vue": "^3.5.27",
     "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@iconify-json/fluent": "^1.2.38",
+    "@iconify-json/ion": "^1.2.6",
+    "@iconify-json/lucide": "^1.2.88",
+    "@iconify-json/material-symbols": "^1.2.53",
+    "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/si-glyph": "^1.2.2",
+    "@iconify-json/twemoji": "^1.2.5",
+    "@nuxt/fonts": "^0.13.0",
+    "@vueuse/nuxt": "^14.2.0"
   }
 }
