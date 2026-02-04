@@ -1,9 +1,14 @@
 <template>
   <div>
     <AppHeader />
-    <main class="mt-24 p-8 text-center">
-      <h1 class="text-4xl font-bold">Welcome to the Test</h1>
-      <p class="mt-4 text-gray-600">Nuxt 3 + Tailwind + ISR is running!</p>
+    
+    <main class="pt-20">
+      <h1 class="text-center text-2xl font-bold mt-10">
+        DG Group Technical Test
+      </h1>
+      <p class="text-center text-gray-500">
+        Responsive Header with ISR and Mock Data
+      </p>
     </main>
   </div>
 </template>
